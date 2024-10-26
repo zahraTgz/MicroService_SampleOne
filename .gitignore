@@ -29,7 +29,6 @@ target/
 !**/src/main/**
 !**/src/test/**
 
-crudApp.log
 ### IntelliJ IDEA ###
 .idea
 *.iws
