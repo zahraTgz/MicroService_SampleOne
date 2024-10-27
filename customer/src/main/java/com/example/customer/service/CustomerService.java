@@ -1,19 +1,22 @@
 package com.example.customer.service;
 
+import com.example.amqp.RabbitMQMessageProducer;
+import com.example.clients.fraud.FraudCheckResponse;
+import com.example.clients.fraud.FraudClient;
+import com.example.clients.notification.NotificationRequest;
 import com.example.customer.dto.CustomerRegistrationRequest;
-import com.example.customer.dto.FraudCheckResponse;
 import com.example.customer.model.Customer;
 import com.example.customer.repository.CustomerRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 @Service
 @AllArgsConstructor
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
-    private final RestTemplate restTemplate;
+    private final RabbitMQMessageProducer rabbitMQMessageProducer;
+    private final FraudClient fraudClient;
 
     public void registerCustomer(CustomerRegistrationRequest request) {
         Customer customer = Customer.builder()
@@ -21,21 +24,29 @@ public class CustomerService {
                 .lastName(request.lastName())
                 .email(request.email())
                 .build();
+
         //TODO:check if email valid
         //TODO: check if email not taken
 
         customerRepository.saveAndFlush(customer);
 
-        //TODO: check if fraudster
-        FraudCheckResponse fraudCheckResponse = restTemplate.getForObject(
-                "http://FRAUD/api/v1/fraud-check/{customerId}",
-                FraudCheckResponse.class,
-                customer.getId()
-        );
+        FraudCheckResponse fraudCheckResponse =
+                fraudClient.isFraudster(customer.getId());
 
-        if (fraudCheckResponse.isFraudster()){
+
+        if (Boolean.TRUE.equals(fraudCheckResponse.isFraudster())) {
             throw new IllegalStateException("fraudster");
         }
-        //TODO: send notification
+        //send notification
+        NotificationRequest notificationRequest = new NotificationRequest(
+                customer.getId(),
+                customer.getEmail(),
+                String.format("Hi %s, welcome to sample_microservice...", customer.getFirstName())
+        );
+        rabbitMQMessageProducer.publish(
+                notificationRequest,
+                "internal.exchange",
+                "internal.notification.routing-key");
+
     }
 }
