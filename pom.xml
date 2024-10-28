@@ -16,6 +16,7 @@
         <module>notification</module>
         <module>clients</module>
         <module>amqp</module>
+        <module>apigetway</module>
     </modules>
 
     <properties>
