@@ -23,6 +23,7 @@ The application provides a set of RESTful APIs to manage core operations for a g
 - Database management with PostgreSQL.
 - Distributed tracing with Zipkin to troubleshoot and optimize microservice communication.
 - PostgreSQL database management and monitoring with pgAdmin.
+- Swagger ui for testing application services:(URL: http://localhost:port/swagger-ui.html)
 
 
 ## Requirements
